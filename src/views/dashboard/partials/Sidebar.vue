@@ -8,6 +8,11 @@
             span.icon
               font-awesome-icon(icon='home')
             span Inicio
+        li
+          router-link(:to="{ name: 'categories_path' }")
+            span.icon
+              font-awesome-icon(icon='film')
+            span Categorias
 </template>
 
 <script>
