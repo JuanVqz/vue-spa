@@ -10,7 +10,8 @@ export default new Vuex.Store({
   state: {
     categories: [],
     category: {},
-    headers: {}
+    headers: {},
+    token: false
   },
 
   mutations: {
@@ -22,23 +23,36 @@ export default new Vuex.Store({
       state.category = category
     },
 
+    setToken(state, token) {
+      localStorage.setItem('token', token)
+      state.token = true
+    },
+
+    removeToken(state) {
+      localStorage.removeItem('token')
+      state.token = false
+    },
+
     setHeaders(state) {
       state.headers = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Authorization': localStorage.getItem('token')
       }
     }
   },
 
   actions: {
-    fetchCategories({commit}) {
-      axios.get("/categories")
+    fetchCategories({commit, state}) {
+      commit('setHeaders')
+      axios.get("/categories", { headers: state.headers })
         .then(response => commit('setCategories', response.data))
         .catch(err => console.log(err.response))
     },
 
-    getCategory({commit}, id) {
-      axios.get(`/categories/${id}`)
+    getCategory({commit, state}, id) {
+      commit('setHeaders')
+      axios.get(`/categories/${id}`, { headers: state.headers })
         .then(response => commit('setCategory', response.data))
         .catch(err => console.log(err.response))
     },
@@ -56,6 +70,23 @@ export default new Vuex.Store({
             console.log(err)
           })
       })
+    },
+
+    doLogin({ commit, state }, user) {
+      commit('setHeaders')
+      return new Promise((resolve, reject) => {
+        axios.post("/authenticate", user, { headers: state.headers })
+          .then(response => {
+            commit('setToken', `Bearer ${response.data.auth_token}`)
+            resolve({ path: 'home_path' })
+          })
+          .catch(err => reject(err))
+      })
+    },
+
+    doLogout({ commit }) {
+      commit('removeToken')
+      commit('setHeaders')
     }
   }
 })
